@@ -1,0 +1,17 @@
+.git
+.gitignore
+*.md
+!README.md
+.hytale-downloader-credentials.json
+hytale-downloader-linux-amd64
+hytale-downloader-windows-amd64.exe
+*.zip
+!Assets.zip
+Server/logs/
+Server/universe/
+Server/mods/
+*.log
+*.bak
+.env.local
+.env.*.local
+docker-compose.override.yml

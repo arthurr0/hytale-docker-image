@@ -1,0 +1,7 @@
+.hytale-downloader-credentials.json
+*.zip
+Server/
+.idea/
+.env
+.env.local
+docker-compose.override.yml
