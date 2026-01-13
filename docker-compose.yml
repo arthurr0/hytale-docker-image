@@ -1,0 +1,31 @@
+services:
+  hytale-server:
+    image: ghcr.io/arthurr0/hytale-server:latest
+    # build: .  # uncomment to build locally
+    container_name: hytale-server
+    restart: unless-stopped
+    ports:
+      - "5520:5520/udp"
+    volumes:
+      - hytale-data:/data
+    environment:
+      - SERVER_NAME=My Hytale Server
+      - MOTD=Welcome to Hytale!
+      # - PASSWORD=your_password
+      - MAX_PLAYERS=100
+      - MAX_VIEW_RADIUS=32
+      - DEFAULT_WORLD=default
+      - DEFAULT_GAMEMODE=Adventure
+      - BIND_ADDRESS=0.0.0.0
+      - BIND_PORT=5520
+      - MEMORY_MIN=4G
+      - MEMORY_MAX=8G
+      - BACKUP_ENABLED=false
+      - BACKUP_FREQUENCY=60
+      - TZ=UTC
+    stdin_open: true
+    tty: true
+
+volumes:
+  hytale-data:
+    driver: local
