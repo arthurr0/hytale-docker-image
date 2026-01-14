@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CONSOLE_IN_PIPE="/tmp/console-input"
+
+if [ ! -p "$CONSOLE_IN_PIPE" ]; then
+    echo "Error: Console pipe not found. Is the server running?" >&2
+    exit 1
+fi
+
+if [ $# -eq 0 ]; then
+    echo "Usage: send-to-console <command>" >&2
+    exit 1
+fi
+
+echo "$*" > "$CONSOLE_IN_PIPE"

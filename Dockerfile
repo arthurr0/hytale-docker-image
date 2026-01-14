@@ -1,9 +1,9 @@
 FROM eclipse-temurin:25-jre
 
-LABEL maintainer="Hytale Docker Server" \
+LABEL maintainer="arthurr0" \
       org.opencontainers.image.title="Hytale Server" \
       org.opencontainers.image.description="Docker image for Hytale dedicated server" \
-      org.opencontainers.image.source="https://github.com/your-repo/docker-hytale-server"
+      org.opencontainers.image.source="https://github.com/arthurr0/hytale-docker-image"
 
 ENV SERVER_NAME="Hytale Server" \
     MOTD="" \
@@ -40,7 +40,9 @@ RUN mkdir -p /data/logs /data/universe /data/mods /opt/hytale && \
     chown -R hytale:hytale /data /opt/hytale
 
 COPY --chown=hytale:hytale docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY --chown=hytale:hytale health.sh /health.sh
+COPY send-to-console /usr/local/bin/send-to-console
+RUN chmod +x /docker-entrypoint.sh /health.sh /usr/local/bin/send-to-console
 
 COPY --chown=hytale:hytale Server/HytaleServer.jar /opt/hytale/HytaleServer.jar
 COPY --chown=hytale:hytale Server/HytaleServer.aot /opt/hytale/HytaleServer.aot
@@ -53,7 +55,7 @@ VOLUME ["/data"]
 STOPSIGNAL SIGTERM
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD pgrep -f "HytaleServer" > /dev/null || exit 1
+    CMD /health.sh
 
 USER hytale
 

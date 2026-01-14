@@ -97,6 +97,34 @@ docker attach hytale-server
 
 4. Detach from container with `Ctrl+P` followed by `Ctrl+Q`
 
+## Sending Commands
+
+### Using send-to-console
+
+```bash
+docker exec hytale-server send-to-console /help
+docker exec hytale-server send-to-console /auth login device
+```
+
+### Interactive Console
+
+```bash
+docker attach hytale-server
+```
+
+Detach with `Ctrl+P` followed by `Ctrl+Q`.
+
+## Health Check
+
+The container includes a health check that verifies:
+1. The Java process is running
+2. The server has fully started (checks logs for "Server started")
+
+Check health status:
+```bash
+docker inspect --format='{{.State.Health.Status}}' hytale-server
+```
+
 ## Examples
 
 ### Custom Memory Allocation

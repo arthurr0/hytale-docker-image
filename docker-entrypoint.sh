@@ -87,6 +87,12 @@ setup_directories() {
         log "Copying Assets.zip to /data..."
         cp /opt/hytale/Assets.zip /data/Assets.zip
     fi
+
+    rm -f /data/.server-ready
+
+    CONSOLE_IN_PIPE="/tmp/console-input"
+    rm -f "$CONSOLE_IN_PIPE"
+    mkfifo "$CONSOLE_IN_PIPE"
 }
 
 log "========================================="
@@ -141,4 +147,4 @@ log "Starting Hytale Server..."
 log "Java args: $JAVA_ARGS"
 log "Server args: $SERVER_ARGS"
 
-exec java $JAVA_ARGS -jar /opt/hytale/HytaleServer.jar $SERVER_ARGS
+exec tail -f "$CONSOLE_IN_PIPE" | java $JAVA_ARGS -jar /opt/hytale/HytaleServer.jar $SERVER_ARGS
