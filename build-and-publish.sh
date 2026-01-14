@@ -4,8 +4,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-GHCR_USER="${GHCR_USER:-}"
-IMAGE_NAME="${IMAGE_NAME:-hytale-server}"
+GHCR_IMAGE="ghcr.io/arthurr0/hytale-docker-image"
+DOCKERHUB_IMAGE="arthur00/hytale-docker-image"
 DOWNLOADER="./hytale-downloader-linux-amd64"
 
 log() {
@@ -54,28 +54,39 @@ VERSION=$($DOWNLOADER -print-version 2>/dev/null || echo "latest")
 log "Hytale version: $VERSION"
 
 log "Building Docker image..."
-docker build -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:$VERSION" .
+docker build \
+    -t "$GHCR_IMAGE:latest" \
+    -t "$GHCR_IMAGE:$VERSION" \
+    -t "$DOCKERHUB_IMAGE:latest" \
+    -t "$DOCKERHUB_IMAGE:$VERSION" \
+    .
 
-log "Build complete: $IMAGE_NAME:latest, $IMAGE_NAME:$VERSION"
+log "Build complete"
 
-if [ -n "$GHCR_USER" ]; then
-    FULL_IMAGE="ghcr.io/$GHCR_USER/$IMAGE_NAME"
-
-    log "Tagging for GitHub Container Registry..."
-    docker tag "$IMAGE_NAME:latest" "$FULL_IMAGE:latest"
-    docker tag "$IMAGE_NAME:$VERSION" "$FULL_IMAGE:$VERSION"
-
+if [ "$1" = "--push" ]; then
     log "Logging in to ghcr.io..."
-    echo "Enter your GitHub Personal Access Token (with write:packages scope):"
-    docker login ghcr.io -u "$GHCR_USER"
+    echo "Enter GitHub Personal Access Token (with write:packages scope):"
+    read -s GHCR_TOKEN
+    echo "$GHCR_TOKEN" | docker login ghcr.io -u arthurr0 --password-stdin
 
-    log "Pushing to $FULL_IMAGE..."
-    docker push "$FULL_IMAGE:latest"
-    docker push "$FULL_IMAGE:$VERSION"
+    log "Pushing to GitHub Container Registry..."
+    docker push "$GHCR_IMAGE:latest"
+    docker push "$GHCR_IMAGE:$VERSION"
 
-    log "Published: $FULL_IMAGE:latest, $FULL_IMAGE:$VERSION"
+    log "Logging in to Docker Hub..."
+    docker login
+
+    log "Pushing to Docker Hub..."
+    docker push "$DOCKERHUB_IMAGE:latest"
+    docker push "$DOCKERHUB_IMAGE:$VERSION"
+
+    log "Published:"
+    log "  - $GHCR_IMAGE:latest"
+    log "  - $GHCR_IMAGE:$VERSION"
+    log "  - $DOCKERHUB_IMAGE:latest"
+    log "  - $DOCKERHUB_IMAGE:$VERSION"
 else
     log ""
-    log "To publish to GitHub Container Registry, run:"
-    log "  GHCR_USER=your-github-username ./build-and-publish.sh"
+    log "Images built locally. To publish, run:"
+    log "  ./build-and-publish.sh --push"
 fi

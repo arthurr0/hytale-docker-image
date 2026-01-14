@@ -6,13 +6,24 @@ Docker image for running a Hytale dedicated server.
 
 ### Option 1: Pull Pre-built Image (Recommended)
 
+From Docker Hub:
 ```bash
 docker run -d \
   --name hytale-server \
   -p 5520:5520/udp \
   -v hytale-data:/data \
   -e SERVER_NAME="My Hytale Server" \
-  ghcr.io/arthurr0/hytale-server:latest
+  arthur00/hytale-docker-image:latest
+```
+
+Or from GitHub Container Registry:
+```bash
+docker run -d \
+  --name hytale-server \
+  -p 5520:5520/udp \
+  -v hytale-data:/data \
+  -e SERVER_NAME="My Hytale Server" \
+  ghcr.io/arthurr0/hytale-docker-image:latest
 ```
 
 ### Option 2: Build Locally

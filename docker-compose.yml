@@ -1,6 +1,6 @@
 services:
   hytale-server:
-    image: ghcr.io/arthurr0/hytale-server:latest
+    image: ghcr.io/arthurr0/hytale-docker-image:latest
     # build: .  # uncomment to build locally
     container_name: hytale-server
     restart: unless-stopped
