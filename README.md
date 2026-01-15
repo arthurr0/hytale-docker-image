@@ -49,7 +49,7 @@ docker compose up -d
 | `MOTD` | `` | Message of the day |
 | `PASSWORD` | `` | Server password (empty = no password) |
 | `MAX_PLAYERS` | `100` | Maximum number of players |
-| `MAX_VIEW_RADIUS` | `32` | Maximum view distance |
+| `MAX_VIEW_RADIUS` | `16` | Maximum view distance (lower = less RAM usage) |
 | `DEFAULT_WORLD` | `default` | Default world name |
 | `DEFAULT_GAMEMODE` | `Adventure` | Default game mode |
 | `BIND_ADDRESS` | `0.0.0.0` | Server bind address |

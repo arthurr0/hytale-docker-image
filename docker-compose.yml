@@ -9,12 +9,18 @@ services:
     volumes:
       - hytale-data:/data
       - /etc/machine-id:/etc/machine-id:ro
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+        reservations:
+          memory: 4G
     environment:
       - SERVER_NAME=My Hytale Server
       - MOTD=Welcome to Hytale!
       # - PASSWORD=your_password
       - MAX_PLAYERS=100
-      - MAX_VIEW_RADIUS=32
+      - MAX_VIEW_RADIUS=16
       - DEFAULT_WORLD=default
       - DEFAULT_GAMEMODE=Adventure
       - BIND_ADDRESS=0.0.0.0
