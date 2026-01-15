@@ -108,6 +108,27 @@ docker attach hytale-server
 
 4. Detach from container with `Ctrl+P` followed by `Ctrl+Q`
 
+### Persistent Credentials
+
+By default, credentials are stored in memory and lost on restart. To enable encrypted persistent storage:
+
+1. Mount the host's machine-id (required for encryption key derivation):
+```bash
+docker run -d \
+  --name hytale-server \
+  -p 5520:5520/udp \
+  -v hytale-data:/data \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  hytale-server
+```
+
+2. After authenticating, enable encrypted storage:
+```
+/auth persistence Encrypted
+```
+
+The `docker-compose.yml` already includes this volume mount.
+
 ## Sending Commands
 
 ### Using send-to-console
