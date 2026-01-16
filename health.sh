@@ -10,7 +10,7 @@ if [ -f "$READY_FILE" ]; then
 fi
 
 LOG_FILE=$(find /data/logs -name "*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-if [ -n "$LOG_FILE" ] && grep -q "Server started" "$LOG_FILE" 2>/dev/null; then
+if [ -n "$LOG_FILE" ] && grep -q "Hytale Server Booted!" "$LOG_FILE" 2>/dev/null; then
     touch "$READY_FILE"
     exit 0
 fi
