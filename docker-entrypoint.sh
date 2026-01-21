@@ -83,9 +83,16 @@ setup_directories() {
     log "Setting up directories..."
     mkdir -p /data/logs /data/universe /data/mods
 
-    if [ ! -f "/data/Assets.zip" ]; then
-        log "Copying Assets.zip to /data..."
-        cp /opt/hytale/Assets.zip /data/Assets.zip
+    log "Syncing Assets.zip from image..."
+    cp /opt/hytale/Assets.zip /data/Assets.zip
+
+    if [ -d "/data/.asset_cache" ]; then
+        log "Clearing asset cache..."
+        rm -rf /data/.asset_cache
+    fi
+    if [ -d "/data/asset_cache" ]; then
+        log "Clearing asset cache..."
+        rm -rf /data/asset_cache
     fi
 
     rm -f /data/.server-ready
