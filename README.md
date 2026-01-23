@@ -16,16 +16,6 @@ docker run -d \
   arthur00/hytale-docker-image:latest
 ```
 
-Or from GitHub Container Registry:
-```bash
-docker run -d \
-  --name hytale-server \
-  -p 5520:5520/udp \
-  -v hytale-data:/data \
-  -e SERVER_NAME="My Hytale Server" \
-  ghcr.io/arthurr0/hytale-docker-image:latest
-```
-
 ### Option 2: Build Locally
 
 Requires a valid Hytale account with server access.

@@ -4,7 +4,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-GHCR_IMAGE="ghcr.io/arthurr0/hytale-docker-image"
 DOCKERHUB_IMAGE="arthur00/hytale-docker-image"
 DOWNLOADER="./hytale-downloader-linux-amd64"
 
@@ -55,8 +54,6 @@ log "Hytale version: $VERSION"
 
 log "Building Docker image..."
 docker build \
-    -t "$GHCR_IMAGE:latest" \
-    -t "$GHCR_IMAGE:$VERSION" \
     -t "$DOCKERHUB_IMAGE:latest" \
     -t "$DOCKERHUB_IMAGE:$VERSION" \
     .
@@ -64,15 +61,6 @@ docker build \
 log "Build complete"
 
 if [ "$1" = "--push" ]; then
-    log "Logging in to ghcr.io..."
-    echo "Enter GitHub Personal Access Token (with write:packages scope):"
-    read -s GHCR_TOKEN
-    echo "$GHCR_TOKEN" | docker login ghcr.io -u arthurr0 --password-stdin
-
-    log "Pushing to GitHub Container Registry..."
-    docker push "$GHCR_IMAGE:latest"
-    docker push "$GHCR_IMAGE:$VERSION"
-
     log "Logging in to Docker Hub..."
     docker login
 
@@ -81,8 +69,6 @@ if [ "$1" = "--push" ]; then
     docker push "$DOCKERHUB_IMAGE:$VERSION"
 
     log "Published:"
-    log "  - $GHCR_IMAGE:latest"
-    log "  - $GHCR_IMAGE:$VERSION"
     log "  - $DOCKERHUB_IMAGE:latest"
     log "  - $DOCKERHUB_IMAGE:$VERSION"
 else

@@ -150,8 +150,23 @@ if [ -n "$EXTRA_ARGS" ]; then
     SERVER_ARGS="$SERVER_ARGS $EXTRA_ARGS"
 fi
 
+shutdown_server() {
+    log "Received shutdown signal, stopping server gracefully..."
+    if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
+        echo "stop" > "$CONSOLE_IN_PIPE"
+        wait "$SERVER_PID" 2>/dev/null
+    fi
+    log "Server stopped."
+    exit 0
+}
+
+trap shutdown_server SIGTERM SIGINT
+
 log "Starting Hytale Server..."
 log "Java args: $JAVA_ARGS"
 log "Server args: $SERVER_ARGS"
 
-exec tail -f "$CONSOLE_IN_PIPE" | java $JAVA_ARGS -jar /opt/hytale/HytaleServer.jar $SERVER_ARGS
+tail -f "$CONSOLE_IN_PIPE" | java $JAVA_ARGS -jar /opt/hytale/HytaleServer.jar $SERVER_ARGS &
+SERVER_PID=$!
+
+wait "$SERVER_PID"

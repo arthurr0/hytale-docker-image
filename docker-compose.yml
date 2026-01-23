@@ -1,7 +1,7 @@
 services:
   hytale-server:
-    image: ghcr.io/arthurr0/hytale-docker-image:latest
-    # build: .  # uncomment to build locally
+    image: arthur00/hytale-docker-image:latest
+    #build: .  # uncomment to build locally
     container_name: hytale-server
     restart: unless-stopped
     ports:
@@ -25,13 +25,14 @@ services:
       - DEFAULT_GAMEMODE=Adventure
       - BIND_ADDRESS=0.0.0.0
       - BIND_PORT=5520
-      - MEMORY_MIN=4G
+      - MEMORY_MIN=128MB
       - MEMORY_MAX=8G
       - BACKUP_ENABLED=false
       - BACKUP_FREQUENCY=60
       - TZ=UTC
     stdin_open: true
     tty: true
+    stop_grace_period: 60s
 
 volumes:
   hytale-data:
