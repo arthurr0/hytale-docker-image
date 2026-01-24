@@ -1,38 +1,83 @@
 services:
   hytale-server:
-    image: arthur00/hytale-docker-image:latest
-    #build: .  # uncomment to build locally
+    #image: arthur00/hytale-docker-image:latest
+    build: .
     container_name: hytale-server
+    hostname: hytale-server
     restart: unless-stopped
     ports:
       - "5520:5520/udp"
     volumes:
       - hytale-data:/data
       - /etc/machine-id:/etc/machine-id:ro
+    networks:
+      - hytale-net
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     deploy:
       resources:
         limits:
-          memory: 10G
+          memory: 8G
         reservations:
           memory: 4G
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     environment:
       - SERVER_NAME=My Hytale Server
       - MOTD=Welcome to Hytale!
       # - PASSWORD=your_password
       - MAX_PLAYERS=100
-      - MAX_VIEW_RADIUS=16
+      - MAX_VIEW_RADIUS=12
       - DEFAULT_WORLD=default
       - DEFAULT_GAMEMODE=Adventure
       - BIND_ADDRESS=0.0.0.0
       - BIND_PORT=5520
-      - MEMORY_MIN=128MB
-      - MEMORY_MAX=8G
+
+      # Memory configuration (choose one mode)
+      # percentage mode (recommended): JVM uses % of container memory limit
+      - MEMORY_MODE=percentage
+      - MAX_RAM_PERCENTAGE=75
+      # fixed mode: explicit -Xms/-Xmx values
+      # - MEMORY_MODE=fixed
+      # - MEMORY_MIN=4G
+      # - MEMORY_MAX=8G
+
+      # Backup settings
       - BACKUP_ENABLED=false
       - BACKUP_FREQUENCY=60
+      # - BACKUP_DIR=/data/backups
+
+      # Server CLI options
+      # - AUTH_MODE=authenticated
+      - DISABLE_SENTRY=false
+      - ALLOW_OP=false
+      - ACCEPT_EARLY_PLUGINS=false
+
+      # config.json settings
+      - LOCAL_COMPRESSION_ENABLED=false
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_PACKETS_PER_SECOND=2000
+      - RATE_LIMIT_BURST_CAPACITY=500
+      - CONNECTION_TIMEOUT_INITIAL=PT10S
+      - CONNECTION_TIMEOUT_AUTH=PT30S
+      - CONNECTION_TIMEOUT_PLAY=PT1M
+      - PLAYER_STORAGE_TYPE=Hytale
+
       - TZ=UTC
     stdin_open: true
     tty: true
     stop_grace_period: 60s
+
+networks:
+  hytale-net:
+    driver: bridge
 
 volumes:
   hytale-data:

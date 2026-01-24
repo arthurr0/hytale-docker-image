@@ -5,3 +5,5 @@ Server/
 .env
 .env.local
 docker-compose.override.yml
+/start.bat
+/start.sh

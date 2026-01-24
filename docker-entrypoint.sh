@@ -23,21 +23,28 @@ create_default_config() {
   "Password": "${PASSWORD}",
   "MaxPlayers": ${MAX_PLAYERS},
   "MaxViewRadius": ${MAX_VIEW_RADIUS},
-  "LocalCompressionEnabled": false,
+  "LocalCompressionEnabled": ${LOCAL_COMPRESSION_ENABLED},
   "Defaults": {
     "World": "${DEFAULT_WORLD}",
     "GameMode": "${DEFAULT_GAMEMODE}"
   },
   "ConnectionTimeouts": {
+    "InitialTimeout": "${CONNECTION_TIMEOUT_INITIAL}",
+    "AuthTimeout": "${CONNECTION_TIMEOUT_AUTH}",
+    "PlayTimeout": "${CONNECTION_TIMEOUT_PLAY}",
     "JoinTimeouts": {}
   },
-  "RateLimit": {},
+  "RateLimit": {
+    "Enabled": ${RATE_LIMIT_ENABLED},
+    "PacketsPerSecond": ${RATE_LIMIT_PACKETS_PER_SECOND},
+    "BurstCapacity": ${RATE_LIMIT_BURST_CAPACITY}
+  },
   "Modules": {},
   "LogLevels": {},
   "Mods": {},
   "DisplayTmpTagsInStrings": false,
   "PlayerStorage": {
-    "Type": "Hytale"
+    "Type": "${PLAYER_STORAGE_TYPE}"
   }
 }
 EOF
@@ -49,15 +56,31 @@ EOF
            --arg pass "$PASSWORD" \
            --argjson maxp "$MAX_PLAYERS" \
            --argjson maxvr "$MAX_VIEW_RADIUS" \
+           --argjson localcomp "$LOCAL_COMPRESSION_ENABLED" \
            --arg world "$DEFAULT_WORLD" \
            --arg gmode "$DEFAULT_GAMEMODE" \
+           --arg ctInitial "$CONNECTION_TIMEOUT_INITIAL" \
+           --arg ctAuth "$CONNECTION_TIMEOUT_AUTH" \
+           --arg ctPlay "$CONNECTION_TIMEOUT_PLAY" \
+           --argjson rlEnabled "$RATE_LIMIT_ENABLED" \
+           --argjson rlPps "$RATE_LIMIT_PACKETS_PER_SECOND" \
+           --argjson rlBurst "$RATE_LIMIT_BURST_CAPACITY" \
+           --arg psType "$PLAYER_STORAGE_TYPE" \
            '.ServerName = $name |
             .MOTD = $motd |
             .Password = $pass |
             .MaxPlayers = $maxp |
             .MaxViewRadius = $maxvr |
+            .LocalCompressionEnabled = $localcomp |
             .Defaults.World = $world |
-            .Defaults.GameMode = $gmode' \
+            .Defaults.GameMode = $gmode |
+            .ConnectionTimeouts.InitialTimeout = $ctInitial |
+            .ConnectionTimeouts.AuthTimeout = $ctAuth |
+            .ConnectionTimeouts.PlayTimeout = $ctPlay |
+            .RateLimit.Enabled = $rlEnabled |
+            .RateLimit.PacketsPerSecond = $rlPps |
+            .RateLimit.BurstCapacity = $rlBurst |
+            .PlayerStorage.Type = $psType' \
            "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
     fi
 }
@@ -107,8 +130,13 @@ log "  Hytale Server Docker Container"
 log "========================================="
 log "Server Name: ${SERVER_NAME}"
 log "Max Players: ${MAX_PLAYERS}"
+log "Max View Radius: ${MAX_VIEW_RADIUS}"
 log "Bind Address: ${BIND_ADDRESS}:${BIND_PORT}"
-log "Memory: ${MEMORY_MIN} - ${MEMORY_MAX}"
+if [ "$MEMORY_MODE" = "percentage" ]; then
+    log "Memory Mode: percentage (${MAX_RAM_PERCENTAGE}% of container limit)"
+else
+    log "Memory Mode: fixed (${MEMORY_MIN} - ${MEMORY_MAX})"
+fi
 log "========================================="
 
 setup_directories
@@ -117,7 +145,20 @@ create_default_files
 
 cd /data
 
-JAVA_ARGS="-Xms${MEMORY_MIN} -Xmx${MEMORY_MAX}"
+JAVA_ARGS=""
+
+if [ "$MEMORY_MODE" = "percentage" ]; then
+    JAVA_ARGS="$JAVA_ARGS -XX:MaxRAMPercentage=${MAX_RAM_PERCENTAGE}"
+    JAVA_ARGS="$JAVA_ARGS -XX:InitialRAMPercentage=${MAX_RAM_PERCENTAGE}"
+else
+    if [ -n "$MEMORY_MIN" ]; then
+        JAVA_ARGS="$JAVA_ARGS -Xms${MEMORY_MIN}"
+    fi
+    if [ -n "$MEMORY_MAX" ]; then
+        JAVA_ARGS="$JAVA_ARGS -Xmx${MEMORY_MAX}"
+    fi
+fi
+
 JAVA_ARGS="$JAVA_ARGS -XX:+UseG1GC"
 JAVA_ARGS="$JAVA_ARGS -XX:+ParallelRefProcEnabled"
 JAVA_ARGS="$JAVA_ARGS -XX:MaxGCPauseMillis=200"
@@ -144,6 +185,22 @@ if [ "$BACKUP_ENABLED" = "true" ]; then
     BACKUP_DIR="${BACKUP_DIR:-/data/backups}"
     mkdir -p "$BACKUP_DIR"
     SERVER_ARGS="$SERVER_ARGS --backup --backup-dir $BACKUP_DIR --backup-frequency ${BACKUP_FREQUENCY}"
+fi
+
+if [ -n "$AUTH_MODE" ]; then
+    SERVER_ARGS="$SERVER_ARGS --auth-mode $AUTH_MODE"
+fi
+
+if [ "$DISABLE_SENTRY" = "true" ]; then
+    SERVER_ARGS="$SERVER_ARGS --disable-sentry"
+fi
+
+if [ "$ALLOW_OP" = "true" ]; then
+    SERVER_ARGS="$SERVER_ARGS --allow-op"
+fi
+
+if [ "$ACCEPT_EARLY_PLUGINS" = "true" ]; then
+    SERVER_ARGS="$SERVER_ARGS --accept-early-plugins"
 fi
 
 if [ -n "$EXTRA_ARGS" ]; then

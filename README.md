@@ -1,17 +1,17 @@
 # Docker Hytale Server
 
-Docker image for running a Hytale dedicated server.
+Docker image for running a Hytale dedicated server based on Eclipse Temurin JRE 25 Alpine.
 
 ## Quick Start
 
-### Option 1: Pull Pre-built Image (Recommended)
+### Option 1: Docker Hub (Recommended)
 
-From Docker Hub:
 ```bash
 docker run -d \
   --name hytale-server \
   -p 5520:5520/udp \
   -v hytale-data:/data \
+  -v /etc/machine-id:/etc/machine-id:ro \
   -e SERVER_NAME="My Hytale Server" \
   arthur00/hytale-docker-image:latest
 ```
@@ -24,144 +24,213 @@ Requires a valid Hytale account with server access.
 git clone https://github.com/arthurr0/hytale-docker-image.git
 cd hytale-docker-image
 
+# Download server files using hytale-downloader
 ./hytale-downloader-linux-amd64
-
 unzip *.zip
 
 docker compose up -d
 ```
 
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SERVER_NAME` | `Hytale Server` | Server name displayed in the server list |
-| `MOTD` | `` | Message of the day |
-| `PASSWORD` | `` | Server password (empty = no password) |
-| `MAX_PLAYERS` | `100` | Maximum number of players |
-| `MAX_VIEW_RADIUS` | `16` | Maximum view distance (lower = less RAM usage) |
-| `DEFAULT_WORLD` | `default` | Default world name |
-| `DEFAULT_GAMEMODE` | `Adventure` | Default game mode |
-| `BIND_ADDRESS` | `0.0.0.0` | Server bind address |
-| `BIND_PORT` | `5520` | Server port (UDP) |
-| `MEMORY_MIN` | `4G` | Minimum Java heap size |
-| `MEMORY_MAX` | `8G` | Maximum Java heap size |
-| `BACKUP_ENABLED` | `false` | Enable automatic backups |
-| `BACKUP_FREQUENCY` | `60` | Backup frequency in minutes |
-| `USE_AOT` | `true` | Use AOT cache for faster startup |
-| `EXTRA_ARGS` | `` | Additional server arguments |
-| `TZ` | `UTC` | Container timezone |
-
-## Volumes
-
-| Path | Description |
-|------|-------------|
-| `/data` | Server data directory (configs, worlds, mods, logs) |
-
-### Data Directory Structure
-
-```
-/data
-├── config.json        # Server configuration
-├── permissions.json   # Player permissions
-├── whitelist.json     # Whitelist configuration
-├── bans.json          # Banned players
-├── Assets.zip         # Game assets
-├── logs/              # Server logs
-├── universe/          # World data
-│   └── worlds/
-│       └── default/   # Default world
-└── mods/              # Server mods
-```
-
-## Ports
-
-| Port | Protocol | Description |
-|------|----------|-------------|
-| 5520 | UDP | Game server (QUIC protocol) |
-
 ## Server Authentication
 
-After first launch, you need to authenticate your server:
+After first launch, authenticate your server:
 
-1. Attach to the container:
+1. Attach to container:
 ```bash
 docker attach hytale-server
 ```
 
-2. Run the authentication command:
+2. Run authentication:
 ```
 /auth login device
 ```
 
 3. Follow the URL and enter the code at https://accounts.hytale.com/device
 
-4. Detach from container with `Ctrl+P` followed by `Ctrl+Q`
-
-### Persistent Credentials
-
-By default, credentials are stored in memory and lost on restart. To enable encrypted persistent storage:
-
-1. Mount the host's machine-id (required for encryption key derivation):
-```bash
-docker run -d \
-  --name hytale-server \
-  -p 5520:5520/udp \
-  -v hytale-data:/data \
-  -v /etc/machine-id:/etc/machine-id:ro \
-  hytale-server
-```
-
-2. After authenticating, enable encrypted storage:
+4. Enable persistent credentials:
 ```
 /auth persistence Encrypted
 ```
 
-The `docker-compose.yml` already includes this volume mount.
+5. Detach with `Ctrl+P` then `Ctrl+Q`
 
-## Sending Commands
+> **Note:** The `docker-compose.yml` already includes `/etc/machine-id` mount required for encrypted credential storage.
 
-### Using send-to-console
+## Environment Variables
+
+### Server Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SERVER_NAME` | `Hytale Server` | Server name in server list |
+| `MOTD` | `` | Message of the day |
+| `PASSWORD` | `` | Server password (empty = no password) |
+| `MAX_PLAYERS` | `100` | Maximum players |
+| `MAX_VIEW_RADIUS` | `12` | View distance (lower = less RAM) |
+| `DEFAULT_WORLD` | `default` | Default world name |
+| `DEFAULT_GAMEMODE` | `Adventure` | Default game mode |
+| `BIND_ADDRESS` | `0.0.0.0` | Server bind address |
+| `BIND_PORT` | `5520` | Server port (UDP) |
+
+### Memory Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MEMORY_MODE` | `percentage` | Memory mode: `percentage` or `fixed` |
+| `MAX_RAM_PERCENTAGE` | `75` | RAM percentage (when `MEMORY_MODE=percentage`) |
+| `MEMORY_MIN` | `` | Minimum heap `-Xms` (when `MEMORY_MODE=fixed`) |
+| `MEMORY_MAX` | `` | Maximum heap `-Xmx` (when `MEMORY_MODE=fixed`) |
+
+**Percentage mode** (recommended): JVM uses a percentage of container memory limit.
+```yaml
+environment:
+  - MEMORY_MODE=percentage
+  - MAX_RAM_PERCENTAGE=75
+```
+
+**Fixed mode**: Explicit heap sizes.
+```yaml
+environment:
+  - MEMORY_MODE=fixed
+  - MEMORY_MIN=4G
+  - MEMORY_MAX=8G
+```
+
+### Backup Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BACKUP_ENABLED` | `false` | Enable automatic backups |
+| `BACKUP_FREQUENCY` | `60` | Backup interval in minutes |
+| `BACKUP_DIR` | `/data/backups` | Backup directory |
+
+### Server CLI Options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTH_MODE` | `` | Authentication mode (e.g., `authenticated`) |
+| `DISABLE_SENTRY` | `false` | Disable Sentry error reporting |
+| `ALLOW_OP` | `false` | Allow operator commands |
+| `ACCEPT_EARLY_PLUGINS` | `false` | Accept early plugin API |
+| `EXTRA_ARGS` | `` | Additional server arguments |
+
+### Network Settings (config.json)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOCAL_COMPRESSION_ENABLED` | `false` | Enable local packet compression |
+| `RATE_LIMIT_ENABLED` | `true` | Enable rate limiting |
+| `RATE_LIMIT_PACKETS_PER_SECOND` | `2000` | Max packets per second |
+| `RATE_LIMIT_BURST_CAPACITY` | `500` | Burst capacity |
+
+### Connection Timeouts
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CONNECTION_TIMEOUT_INITIAL` | `PT10S` | Initial connection timeout |
+| `CONNECTION_TIMEOUT_AUTH` | `PT30S` | Authentication timeout |
+| `CONNECTION_TIMEOUT_PLAY` | `PT1M` | Play session timeout |
+
+### Storage
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PLAYER_STORAGE_TYPE` | `Hytale` | Player data storage type |
+
+### Other
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TZ` | `UTC` | Container timezone |
+
+## Volumes
+
+| Path | Description |
+|------|-------------|
+| `/data` | Persistent data (configs, worlds, mods, logs) |
+| `/etc/machine-id` | Host machine ID (read-only, for credential encryption) |
+
+### Data Directory Structure
+
+```
+/data
+├── config.json
+├── permissions.json
+├── whitelist.json
+├── bans.json
+├── Assets.zip
+├── logs/
+├── universe/
+│   └── worlds/
+│       └── default/
+├── mods/
+└── backups/
+```
+
+## Ports
+
+| Port | Protocol | Description |
+|------|----------|-------------|
+| 5520 | UDP | Game server (QUIC) |
+
+## Commands
+
+### Send Commands
 
 ```bash
 docker exec hytale-server send-to-console /help
-docker exec hytale-server send-to-console /auth login device
+docker exec hytale-server send-to-console "/say Hello!"
 ```
 
 ### Interactive Console
 
 ```bash
 docker attach hytale-server
+# Detach: Ctrl+P, Ctrl+Q
 ```
 
-Detach with `Ctrl+P` followed by `Ctrl+Q`.
+### View Logs
 
-## Health Check
+```bash
+docker logs -f hytale-server
+```
 
-The container includes a health check that verifies:
-1. The Java process is running
-2. The server has fully started (checks logs for "Server started")
+### Check Health
 
-Check health status:
 ```bash
 docker inspect --format='{{.State.Health.Status}}' hytale-server
 ```
 
 ## Examples
 
-### Custom Memory Allocation
+### Password Protected Server
 
 ```bash
 docker run -d \
   --name hytale-server \
   -p 5520:5520/udp \
   -v hytale-data:/data \
-  -e MEMORY_MIN=8G \
-  -e MEMORY_MAX=16G \
-  hytale-server
+  -e SERVER_NAME="Private Server" \
+  -e PASSWORD="secret123" \
+  arthur00/hytale-docker-image:latest
 ```
 
-### Enable Backups
+### High-Performance Server
+
+```bash
+docker run -d \
+  --name hytale-server \
+  -p 5520:5520/udp \
+  -v hytale-data:/data \
+  -e MEMORY_MODE=fixed \
+  -e MEMORY_MIN=8G \
+  -e MEMORY_MAX=16G \
+  -e MAX_VIEW_RADIUS=16 \
+  -e MAX_PLAYERS=200 \
+  arthur00/hytale-docker-image:latest
+```
+
+### With Backups
 
 ```bash
 docker run -d \
@@ -170,7 +239,7 @@ docker run -d \
   -v hytale-data:/data \
   -e BACKUP_ENABLED=true \
   -e BACKUP_FREQUENCY=30 \
-  hytale-server
+  arthur00/hytale-docker-image:latest
 ```
 
 ### Custom Port
@@ -181,60 +250,35 @@ docker run -d \
   -p 25565:25565/udp \
   -v hytale-data:/data \
   -e BIND_PORT=25565 \
-  hytale-server
+  arthur00/hytale-docker-image:latest
 ```
 
-### With Password Protection
+## Updating
 
 ```bash
-docker run -d \
-  --name hytale-server \
-  -p 5520:5520/udp \
-  -v hytale-data:/data \
-  -e PASSWORD="mysecretpassword" \
-  hytale-server
+docker compose down
+# Download new server files with hytale-downloader
+docker compose build --no-cache
+docker compose up -d
 ```
 
-## Building the Image
+## Building
 
 ```bash
 docker build -t hytale-server .
 ```
 
-## Logs
-
-View server logs:
-
-```bash
-docker logs -f hytale-server
-```
-
-## Updating
-
-1. Stop the container:
-```bash
-docker compose down
-```
-
-2. Download new server files (use hytale-downloader)
-
-3. Rebuild the image:
-```bash
-docker compose build --no-cache
-```
-
-4. Start the container:
-```bash
-docker compose up -d
-```
+Required files:
+- `Server/HytaleServer.jar`
+- `Assets.zip`
 
 ## Requirements
 
 - Docker 20.10+
-- At least 4GB RAM (8GB+ recommended)
+- 4GB RAM minimum (8GB+ recommended)
 - Valid Hytale account with server access
 
 ## Resources
 
 - [Hytale Server Manual](https://support.hytale.com/hc/en-us/articles/45326769420827-Hytale-Server-Manual)
-- [Host Havoc Guide](https://hosthavoc.com/blog/how-to-setup-a-hytale-server)
+- [Host Havoc Setup Guide](https://hosthavoc.com/blog/how-to-setup-a-hytale-server)
