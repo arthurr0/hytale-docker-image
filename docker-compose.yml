@@ -30,15 +30,27 @@ services:
         max-size: "50m"
         max-file: "3"
     environment:
-      - SERVER_NAME=My Hytale Server
-      - MOTD=Welcome to Hytale!
+      # config.json overrides (only set values you want to change)
+      # - SERVER_NAME=My Hytale Server
+      # - MOTD=Welcome to Hytale!
       # - PASSWORD=your_password
-      - MAX_PLAYERS=100
-      - MAX_VIEW_RADIUS=12
-      - DEFAULT_WORLD=default
-      - DEFAULT_GAMEMODE=Adventure
+      # - MAX_PLAYERS=100
+      # - MAX_VIEW_RADIUS=12
+      # - DEFAULT_WORLD=default
+      # - DEFAULT_GAMEMODE=Adventure
+      # - LOCAL_COMPRESSION_ENABLED=false
+      # - RATE_LIMIT_ENABLED=true
+      # - RATE_LIMIT_PACKETS_PER_SECOND=2000
+      # - RATE_LIMIT_BURST_CAPACITY=500
+      # - CONNECTION_TIMEOUT_INITIAL=PT10S
+      # - CONNECTION_TIMEOUT_AUTH=PT30S
+      # - CONNECTION_TIMEOUT_PLAY=PT1M
+      # - PLAYER_STORAGE_TYPE=Hytale
+
+      # Server runtime settings
       - BIND_ADDRESS=0.0.0.0
       - BIND_PORT=5520
+      - STARTUP_TIMEOUT=300
 
       # Memory configuration (choose one mode)
       # percentage mode (recommended): JVM uses % of container memory limit
@@ -59,16 +71,6 @@ services:
       - DISABLE_SENTRY=false
       - ALLOW_OP=false
       - ACCEPT_EARLY_PLUGINS=false
-
-      # config.json settings
-      - LOCAL_COMPRESSION_ENABLED=false
-      - RATE_LIMIT_ENABLED=true
-      - RATE_LIMIT_PACKETS_PER_SECOND=2000
-      - RATE_LIMIT_BURST_CAPACITY=500
-      - CONNECTION_TIMEOUT_INITIAL=PT10S
-      - CONNECTION_TIMEOUT_AUTH=PT30S
-      - CONNECTION_TIMEOUT_PLAY=PT1M
-      - PLAYER_STORAGE_TYPE=Hytale
 
       - TZ=UTC
     stdin_open: true

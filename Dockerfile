@@ -17,18 +17,13 @@ RUN apt-get update \
     && mkdir -p /data/logs /data/universe /data/mods /opt/hytale \
     && chown -R hytale:hytale /data /opt/hytale
 
-ENV SERVER_NAME="Hytale Server" \
-    MOTD="" \
-    MAX_PLAYERS=100 \
-    MAX_VIEW_RADIUS=12 \
-    DEFAULT_WORLD="default" \
-    DEFAULT_GAMEMODE="Adventure" \
-    BIND_ADDRESS="0.0.0.0" \
+ENV BIND_ADDRESS="0.0.0.0" \
     BIND_PORT=5520 \
     MEMORY_MODE="percentage" \
     MAX_RAM_PERCENTAGE=75 \
     MEMORY_MIN="" \
     MEMORY_MAX="" \
+    STARTUP_TIMEOUT=300 \
     BACKUP_ENABLED="false" \
     BACKUP_FREQUENCY=60 \
     BACKUP_DIR="/data/backups" \
@@ -36,14 +31,6 @@ ENV SERVER_NAME="Hytale Server" \
     DISABLE_SENTRY="false" \
     ALLOW_OP="false" \
     ACCEPT_EARLY_PLUGINS="false" \
-    LOCAL_COMPRESSION_ENABLED="false" \
-    RATE_LIMIT_ENABLED="true" \
-    RATE_LIMIT_PACKETS_PER_SECOND=2000 \
-    RATE_LIMIT_BURST_CAPACITY=500 \
-    CONNECTION_TIMEOUT_INITIAL="PT10S" \
-    CONNECTION_TIMEOUT_AUTH="PT30S" \
-    CONNECTION_TIMEOUT_PLAY="PT1M" \
-    PLAYER_STORAGE_TYPE="Hytale" \
     EXTRA_ARGS="" \
     TZ="UTC"
 

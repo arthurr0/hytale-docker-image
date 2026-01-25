@@ -15,74 +15,64 @@ log() {
 create_default_config() {
     if [ ! -f "$CONFIG_FILE" ]; then
         log "Creating default config.json..."
-        cat > "$CONFIG_FILE" << EOF
+        cat > "$CONFIG_FILE" << 'EOF'
 {
   "Version": 3,
-  "ServerName": "${SERVER_NAME}",
-  "MOTD": "${MOTD}",
-  "Password": "${PASSWORD}",
-  "MaxPlayers": ${MAX_PLAYERS},
-  "MaxViewRadius": ${MAX_VIEW_RADIUS},
-  "LocalCompressionEnabled": ${LOCAL_COMPRESSION_ENABLED},
+  "ServerName": "Hytale Server",
+  "MOTD": "",
+  "Password": "",
+  "MaxPlayers": 100,
+  "MaxViewRadius": 12,
+  "LocalCompressionEnabled": false,
   "Defaults": {
-    "World": "${DEFAULT_WORLD}",
-    "GameMode": "${DEFAULT_GAMEMODE}"
+    "World": "default",
+    "GameMode": "Adventure"
   },
   "ConnectionTimeouts": {
-    "InitialTimeout": "${CONNECTION_TIMEOUT_INITIAL}",
-    "AuthTimeout": "${CONNECTION_TIMEOUT_AUTH}",
-    "PlayTimeout": "${CONNECTION_TIMEOUT_PLAY}",
+    "InitialTimeout": "PT10S",
+    "AuthTimeout": "PT30S",
+    "PlayTimeout": "PT1M",
     "JoinTimeouts": {}
   },
   "RateLimit": {
-    "Enabled": ${RATE_LIMIT_ENABLED},
-    "PacketsPerSecond": ${RATE_LIMIT_PACKETS_PER_SECOND},
-    "BurstCapacity": ${RATE_LIMIT_BURST_CAPACITY}
+    "Enabled": true,
+    "PacketsPerSecond": 2000,
+    "BurstCapacity": 500
   },
   "Modules": {},
   "LogLevels": {},
   "Mods": {},
   "DisplayTmpTagsInStrings": false,
   "PlayerStorage": {
-    "Type": "${PLAYER_STORAGE_TYPE}"
+    "Type": "Hytale"
   }
 }
 EOF
-    else
-        log "Updating existing config.json with environment variables..."
-        tmp=$(mktemp)
-        jq --arg name "$SERVER_NAME" \
-           --arg motd "$MOTD" \
-           --arg pass "$PASSWORD" \
-           --argjson maxp "$MAX_PLAYERS" \
-           --argjson maxvr "$MAX_VIEW_RADIUS" \
-           --argjson localcomp "$LOCAL_COMPRESSION_ENABLED" \
-           --arg world "$DEFAULT_WORLD" \
-           --arg gmode "$DEFAULT_GAMEMODE" \
-           --arg ctInitial "$CONNECTION_TIMEOUT_INITIAL" \
-           --arg ctAuth "$CONNECTION_TIMEOUT_AUTH" \
-           --arg ctPlay "$CONNECTION_TIMEOUT_PLAY" \
-           --argjson rlEnabled "$RATE_LIMIT_ENABLED" \
-           --argjson rlPps "$RATE_LIMIT_PACKETS_PER_SECOND" \
-           --argjson rlBurst "$RATE_LIMIT_BURST_CAPACITY" \
-           --arg psType "$PLAYER_STORAGE_TYPE" \
-           '.ServerName = $name |
-            .MOTD = $motd |
-            .Password = $pass |
-            .MaxPlayers = $maxp |
-            .MaxViewRadius = $maxvr |
-            .LocalCompressionEnabled = $localcomp |
-            .Defaults.World = $world |
-            .Defaults.GameMode = $gmode |
-            .ConnectionTimeouts.InitialTimeout = $ctInitial |
-            .ConnectionTimeouts.AuthTimeout = $ctAuth |
-            .ConnectionTimeouts.PlayTimeout = $ctPlay |
-            .RateLimit.Enabled = $rlEnabled |
-            .RateLimit.PacketsPerSecond = $rlPps |
-            .RateLimit.BurstCapacity = $rlBurst |
-            .PlayerStorage.Type = $psType' \
-           "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
     fi
+}
+
+update_config_from_env() {
+    log "Applying environment variable overrides to config.json..."
+    tmp=$(mktemp)
+    cp "$CONFIG_FILE" "$tmp"
+
+    [ -n "$SERVER_NAME" ] && jq --arg v "$SERVER_NAME" '.ServerName = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$MOTD" ] && jq --arg v "$MOTD" '.MOTD = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$PASSWORD" ] && jq --arg v "$PASSWORD" '.Password = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$MAX_PLAYERS" ] && jq --argjson v "$MAX_PLAYERS" '.MaxPlayers = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$MAX_VIEW_RADIUS" ] && jq --argjson v "$MAX_VIEW_RADIUS" '.MaxViewRadius = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$LOCAL_COMPRESSION_ENABLED" ] && jq --argjson v "$LOCAL_COMPRESSION_ENABLED" '.LocalCompressionEnabled = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$DEFAULT_WORLD" ] && jq --arg v "$DEFAULT_WORLD" '.Defaults.World = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$DEFAULT_GAMEMODE" ] && jq --arg v "$DEFAULT_GAMEMODE" '.Defaults.GameMode = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$CONNECTION_TIMEOUT_INITIAL" ] && jq --arg v "$CONNECTION_TIMEOUT_INITIAL" '.ConnectionTimeouts.InitialTimeout = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$CONNECTION_TIMEOUT_AUTH" ] && jq --arg v "$CONNECTION_TIMEOUT_AUTH" '.ConnectionTimeouts.AuthTimeout = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$CONNECTION_TIMEOUT_PLAY" ] && jq --arg v "$CONNECTION_TIMEOUT_PLAY" '.ConnectionTimeouts.PlayTimeout = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$RATE_LIMIT_ENABLED" ] && jq --argjson v "$RATE_LIMIT_ENABLED" '.RateLimit.Enabled = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$RATE_LIMIT_PACKETS_PER_SECOND" ] && jq --argjson v "$RATE_LIMIT_PACKETS_PER_SECOND" '.RateLimit.PacketsPerSecond = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$RATE_LIMIT_BURST_CAPACITY" ] && jq --argjson v "$RATE_LIMIT_BURST_CAPACITY" '.RateLimit.BurstCapacity = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+    [ -n "$PLAYER_STORAGE_TYPE" ] && jq --arg v "$PLAYER_STORAGE_TYPE" '.PlayerStorage.Type = $v' "$tmp" > "$tmp.new" && mv "$tmp.new" "$tmp"
+
+    mv "$tmp" "$CONFIG_FILE"
 }
 
 create_default_files() {
@@ -128,19 +118,10 @@ setup_directories() {
 log "========================================="
 log "  Hytale Server Docker Container"
 log "========================================="
-log "Server Name: ${SERVER_NAME}"
-log "Max Players: ${MAX_PLAYERS}"
-log "Max View Radius: ${MAX_VIEW_RADIUS}"
-log "Bind Address: ${BIND_ADDRESS}:${BIND_PORT}"
-if [ "$MEMORY_MODE" = "percentage" ]; then
-    log "Memory Mode: percentage (${MAX_RAM_PERCENTAGE}% of container limit)"
-else
-    log "Memory Mode: fixed (${MEMORY_MIN} - ${MEMORY_MAX})"
-fi
-log "========================================="
 
 setup_directories
 create_default_config
+update_config_from_env
 create_default_files
 
 cd /data
@@ -219,11 +200,24 @@ shutdown_server() {
 
 trap shutdown_server SIGTERM SIGINT
 
+startup_watchdog() {
+    sleep "$STARTUP_TIMEOUT"
+    if [ ! -f "/data/.server-ready" ]; then
+        log "ERROR: Server failed to start within ${STARTUP_TIMEOUT} seconds. Shutting down."
+        kill -TERM $$ 2>/dev/null
+    fi
+}
+
 log "Starting Hytale Server..."
 log "Java args: $JAVA_ARGS"
 log "Server args: $SERVER_ARGS"
+log "Startup timeout: ${STARTUP_TIMEOUT}s"
+
+startup_watchdog &
+WATCHDOG_PID=$!
 
 tail -f "$CONSOLE_IN_PIPE" | java $JAVA_ARGS -jar /opt/hytale/HytaleServer.jar $SERVER_ARGS &
 SERVER_PID=$!
 
 wait "$SERVER_PID"
+kill "$WATCHDOG_PID" 2>/dev/null
